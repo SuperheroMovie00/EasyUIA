@@ -1,0 +1,107 @@
+<meta charset="UTF-8" />
+<title>Document</title>
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<script type="text/javascript">
+	var token = window.sessionStorage.getItem("token");
+
+	document.onkeyup = function(e) { //onkeyup是javascript的一个事件、当按下某个键弹起 var _key;                                                 //的时触发  
+		if(e == null) { // ie  
+			_key = event.keyCode;
+		} else { // firefox              //获取你按下键的keyCode  
+			_key = e.which; //每个键的keyCode是不一样的  
+		}
+
+		if(_key == 13) { //判断keyCode是否是13，也就是回车键(回车的keyCode是13)  
+
+			juesecha(); //验证成功触发一个Id为btnLogin的  
+			//按钮的click事件，达到提交表单的目的  
+		}
+	}
+
+	$(function() {
+		juesecha();
+	});
+
+	function juesecha() {
+
+		$('#tt').treegrid({
+			url: 'http://localhost:8080/CRM/permission/queryNodeer',
+			method: "post",
+			queryParams: {
+				token: token,
+				roleName: $("#roleName").val(),
+
+			},
+			idField: 'text',
+			treeField: 'text',
+			columns: [
+				[{
+						field: 'text',
+						title: '权限',
+						width: 200,
+						align: 'left'
+					}, {
+						field: 'context',
+						title: '权限方法路径',
+						width: 200,
+						align: 'left'
+					}, {
+						field: 'permissionid',
+						title: '权限的id值',
+						width: 300,
+						align: 'left'
+					}
+
+				]
+			]
+		});
+	}
+
+	function namechaxun() {
+		$('#tt').treegrid({
+			url: 'http://localhost:8080/CRM/permission/selectpermissionfromname',
+			method: "post",
+			queryParams: {
+				token: token,
+				name: $("#name").val()
+			},
+			idField: 'text',
+			treeField: 'text',
+			columns: [
+				[{
+						field: 'text',
+						title: '权限',
+						width: 200,
+						align: 'left'
+					}, {
+						field: 'context',
+						title: '权限方法路径',
+						width: 200,
+						align: 'left'
+					}, {
+						field: 'permissionid',
+						title: '权限的id值',
+						width: 300,
+						align: 'left'
+					}
+
+				]
+			]
+		});
+
+	};
+</script>
+
+&emsp;&emsp;&emsp; &emsp;&emsp;&emsp;&emsp; 角色名称: <input class="easyui-textbox" id="roleName" style="width:80px">
+<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="juesecha()">查找</a>
+权限名称: <input class="easyui-textbox" id="name" style="width:80px">
+<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="namechaxun()">查找</a>
+
+<table id="tt" style="width:720px;height:800px">
+
+</table>

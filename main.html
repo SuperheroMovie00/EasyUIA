@@ -1,0 +1,481 @@
+﻿<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="js/easyui/themes/icon.css">
+		<link rel="stylesheet" type="text/css" href="js/easyui/themes/black/easyui.css">
+		<script type="text/javascript" src="js/easyui/jquery.min.js"></script>
+		<script type="text/javascript" src="js/easyui/jquery.easyui.min.js"></script>
+		<script type="text/ecmascript" src="js/easyui/locale/easyui-lang-zh_CN.js"></script>
+		<script>
+			var token = window.sessionStorage.getItem("token");
+			var userId = window.localStorage.getItem("uid"); //获取登录页面中暂时存储的数据
+			var roleNames = window.localStorage.getItem("roleNames");
+			var permission = window.localStorage.getItem("permission");
+			var LoginName = window.localStorage.getItem("loginName");
+			if(roleNames != null) {
+				var roleName = roleNames.split(","); //获取到的数据是字符串，使用逗号将其拆分，转化为对象
+			}
+
+			$(function() {
+				if(token == null) {
+					$.messager.confirm("服务器错误提示", "无token令牌,请登录 !", function(r) {
+						if(r) {
+							window.top.location.href = "http://127.0.0.1:8020/EasyUI/login.html";
+						}
+					})
+				}
+
+				$.post('http://localhost:8080/CRM/dongtai/shifouzixun', {
+					id: userId,
+					token: token
+				}, function(re) {
+					if(re.success) {
+						$.post('http://localhost:8080/CRM/dongtai/selectDynamicmessageslimit', {
+							id: userId,
+							token: token
+						}, function(res) {
+							var id = res.id
+
+							$.messager.show({
+								title: "消息",
+								msg: res.messageContent + `<input type="button" value="收到" onclick="chakan(this,${id})"/>`,
+								timeout: 0,
+								showType: 'slide'
+							})
+
+						}, 'json');
+
+						$("#dong").attr("onclick", "dongtai()");
+					} else {
+						$("#dong").attr("type", "hidden");
+					}
+				}, 'json')
+
+				$.post('http://localhost:8080/CRM/usercheck/state', {
+					LoginName: LoginName,
+					token: token
+				}, function(res) {
+					if(res == '') {
+						$("#qian").attr("onclick", "qiandaoInfo()");
+						$("#qian").attr("value", "签到");
+
+					} else {
+
+						/*将取出来的值(像json的东西)*/
+						var json = $.parseJSON(res);
+
+						if(json.checkInTime != null) {
+							$("#qian").attr("onclick", "qiantuiInfo()");
+							$("#qian").attr("value", "签退");
+
+						}
+
+						if(json.checkOutTime != null) {
+							$("#qian").attr("type", "hidden");
+						} else {
+
+						}
+
+					}
+
+				});
+
+				loadTree();
+				$("#useName").html("欢迎您:" + LoginName)
+			});
+
+			/*将消息标为已读*/
+			function chakan(o, id) {
+				$.post('http://localhost:8080/CRM/dongtai/state', {
+					id: id,
+					token: token
+				}, function(res) {
+					if(res.success) {
+
+					}
+				}, 'json');
+
+			}
+
+			/*点击动态的时候触发的方法*/
+			function dongtai() {
+				$("#dongtai_window").window("open");
+				$('#dongtaidontai').datagrid({
+					url: 'http://localhost:8080/CRM/dongtai/selectDynamicmessages',
+					method: "post",
+					queryParams: {
+						id: userId,
+						token: token
+					},
+					columns: [
+						[{
+								field: 'studentId',
+								title: '学生的Id',
+								width: 165
+							},
+							{
+								field: 'studentName',
+								title: '学生的名字',
+								width: 200
+							},
+							{
+								field: 'messageContent',
+								title: '消息内容',
+								width: 150,
+							},
+							{
+								field: 'createTime',
+								title: '创建时间',
+								width: 150,
+							},
+							{
+								field: 'isOpen',
+								title: '是否打开',
+								width: 100,
+							}
+						]
+					]
+				});
+			}
+
+			/*将json转换成树的雏形*/
+			function getJsonTree(data, parentId) {
+				let itemArr = [];
+				for(let i = 0; i < data.length; i++) {
+					let node = data[i];
+					if(node.parentId == parentId) {
+						let newNode = {
+							id: node.id,
+							text: node.name,
+							parentId: node.parentId,
+							path: node.path,
+							weight: node.weight,
+							children: getJsonTree(data, node.id)
+						};
+						itemArr.push(newNode);
+					}
+				}
+				return itemArr;
+			}
+
+			function loadTree() {
+				$.post("http://localhost:8080/CRM/module/GetSysRightsHtmlTreeString", {
+						roleName: localStorage.getItem("roleNames"), //传递的参数
+						treeUlId: "treeUlId",
+						token: token
+					},
+					function(res) {
+						res = getJsonTree(res, 0);
+
+						$("#menuTree").tree({
+							data: res,
+							onClick: function(node) {
+								navTab(node.text, node.path)
+
+							}
+						}); //以树状结构显示
+
+					}, "json"
+				);
+			}
+
+			//树状结构的节点是否已在中部显示
+			function navTab(re, html) {
+
+				var flag = $("#tt").tabs('exists', re); //判断是否存在
+				$('#menuTree').tree({
+					onSelect: function(node) { //是否选中节点，选中节点时触发
+
+						var isLeaf = $('#treeUlId').tree('isLeaf', node.target);
+
+						if(isLeaf) {
+							if(!flag) {
+								$('#tt').tabs('add', {
+									title: re,
+									closable: true,
+									//href: html
+									content: `<iframe src="${html}" style="width:100%;height:100%;border:0px;">`
+								});
+							} else {
+								$("#tt").tabs('select', re);
+							}
+						}
+					}
+				});
+			}
+		</script>
+		<script>
+			//安全推出
+			function exit() {
+				$.messager.confirm("确认", "您确认想退出系统吗!!!", function(r) {
+					if(r) {
+						window.localStorage.clear("roleNames");
+						window.location.href = "login.html"
+					}
+
+				})
+
+			}
+
+			//签退用户
+			function qiantuiInfo() {
+				$.messager.confirm('确认', '您确认想要签退吗？', function(r) {
+					if(r) {
+						$.post(
+							"http://localhost:8080/CRM/usercheck/qiantuiqian", {
+								username: LoginName,
+								token: token
+								/*token:token*/
+							},
+							function(e) {
+								if(e.success) {
+									$.messager.alert("提示", "签退成功", "info", function() {
+										window.location.reload()
+									});
+									$("#dg").datagrid("load");
+								} else {
+									$.messager.alert("提示", e.remark);
+								}
+							}, "json");
+					}
+				});
+
+			}
+
+			/*云笔记方法*/
+			function biji() {
+				$("#bijiao_window").window("open");
+
+				$("#ccc").datagrid({
+					url: 'http://localhost:8080/CRM/biji/selectallbiji',
+					queryParams: { //传递参数
+						uid: userId,
+						token: token
+					}
+				});
+
+			}
+
+			/*点击新增笔记*/
+			function addbiji() {
+				$("#adddbiji_window").window("open");
+			}
+
+			/*新增笔记保存*/
+			function bijibaocun() {
+				var context = $("#bijitext").val();
+
+				$.post('http://localhost:8080/CRM/biji/insertbiji', {
+					uid: userId,
+					context: context,
+					token: token
+				}, function(res) {
+					if(res.success) {
+						$.messager.alert("提示", res.remark)
+						$("#ccc").datagrid("reload");
+						$("#adddbiji_window").window("close");
+						
+					} else {
+						$.messager.alert("提示", res.remark)
+					}
+				}, 'json');
+			}
+
+			/*新增笔记取消*/
+			function bijiquxiao() {
+				$("#adddbiji_window").window("close");
+			}
+
+			function bijichakanquxiao() {
+				$("#bijichakan_window").window("close");
+			}
+
+			//签到用户
+			function qiandaoInfo() {
+				$.messager.confirm('确认', '您确认想要签到吗?', function(r) {
+					if(r) {
+						$.post(
+							"http://localhost:8080/CRM/usercheck/qiandaoqian", {
+								id: userId,
+								username: LoginName,
+								token: token
+
+							},
+							function(e) {
+								if(e.success) {
+									$.messager.alert("提示", "签到成功", "info", function() {
+
+										window.location.reload()
+									})
+
+									$("#dg").datagrid("load");
+								}
+							}, "json");
+					}
+				});
+			}
+
+			/*笔记修改*/
+			function bijixiugai(index) {
+
+				$("#bijichakan_window").window("open");
+				var data = $("#ccc").datagrid("getData");
+				var row = data.rows[index];
+				$("#bid").val(row.bId);
+				$("#bijiccc").val(row.context);
+			}
+
+			function bijchakanbaocun() {
+				$.post('http://localhost:8080/CRM/biji/updatebiji', {
+					bid: $("#bid").val(),
+					context: $("#bijiccc").val(),
+					token: token
+				}, function(e) {
+					if(e.success) {
+						$.messager.alert("提示", e.remark)
+						$("#ccc").datagrid("reload");
+						$("#bijichakan_window").window("close");
+
+					} else {
+						$.messager.alert("提示", e.remark)
+					}
+				}, 'json');
+			}
+
+			/*笔记删除*/
+			function bijishanchu(index) {
+				var data = $("#ccc").datagrid("getData");
+				var row = data.rows[index];
+
+				$.messager.confirm("确认", "确定要删除此笔记吗?", function(r) {
+					if(r) {
+						$.post('http://localhost:8080/CRM/biji/deletebiji', {
+							bid: row.bId,
+							token: token
+						}, function(e) {
+							if(e.success) {
+								$.messager.alert("提示", e.remark)
+								$("#ccc").datagrid("reload");
+
+							} else {
+								$.messager.alert("提示", e.remark)
+							}
+						}, 'json');
+					}
+				})
+
+			}
+
+			function caozuo(value, row, index) {
+				return "<a href='javascript:void(0)' class='easyui-linkbutton' iconCls='icon-add' plain='true' onclick='bijixiugai(" + index + ")'>查看</a>  &ensp; <a href='javascript:void(0)' class='easyui-linkbutton' iconCls='icon-add' plain='true' onclick='bijishanchu(" + index + ")'>删除</a> ";
+			}
+		</script>
+	</head>
+
+	<body>
+		<div style="margin:20px 0;" style="background-color: #000000;"></div>
+		<div class="easyui-layout" style="width:100%;height:750px;">
+			<div id="chong" data-options="region:'north'" style="height:60px;background-color: #000000;">
+				<h3><font color="red" size="4">CRM系统</font>&nbsp;&nbsp;<span id="useName" name="roleNames"></span>&nbsp;&nbsp;
+					
+					<a href="javascript:void(0)" id="mb" class="easyui-menubutton" data-options="menu:'#mm',iconCls:'icon-reload'">个人操作</a>   
+<div id="mm" style="width:150px;">   
+    <div data-options="iconCls:'icon-redo'" onclick="biji()">云笔记</div>   
+    <!--<div data-options="iconCls:'icon-redo'">Redo</div>   
+    <div data-options="iconCls:'icon-redo'"></div>   
+    <div data-options="iconCls:'icon-redo'">Cut</div>   
+    <div data-options="iconCls:'icon-redo'">Copy</div>   
+    <div data-options="iconCls:'icon-redo'">Paste</div>   
+    <div data-options="iconCls:'icon-redo'"></div>   
+    <div data-options="iconCls:'icon-redo'">Delete</div>   
+    <div data-options="iconCls:'icon-redo'">Select All</div>  --> 
+</div>  
+					
+					
+					
+					<a class="easyui-linkbutton" onclick="exit()">安全退出</a> <input  type="" style="float: right; width: 200px; height: 30px;" onclick="" class="easyui-linkbutton" id="dong" value="动态消息"/> <input  type="" style="float: right; width: 200px; height: 30px;" onclick="" class="easyui-linkbutton" id="qian" value="签到"/></h3>
+			</div>
+			<div data-options="region:'south',split:true" style="height:50px;"></div>
+
+			<div data-options="region:'west',split:true" title="导航应用" style="width:160px;background-image: url(img/timg2.jpg);">
+				<div id="menuTree">
+					<!--这个地方显示树桩结构-->
+				</div>
+			</div>
+
+			<div id="centerTabs" data-options="region:'center',iconCls:'icon-ok'">
+				<div id="tt" class="easyui-tabs" fit="true" style="background-image: url(img/timg.jpg);">
+					<!--这个地方采用tabs控件进行布局-->
+				</div>
+			</div>
+
+		</div>
+	</body>
+
+	<div id="dongtai_window" title="跟踪信息" class="easyui-window" data-options="modal:true,closed:true" style="width:800px;height:230px;padding:10px;">
+		<form id="dongtaiForm">
+			<table id="dongtaidontai"></table>
+		</form>
+	</div>
+
+</html>
+
+<!--云笔记界面-->
+
+<div id="bijiao_window" title="云笔记信息" class="easyui-window" data-options="modal:true,closed:true" style="width:1000px;height:400px;padding:10px;">
+	<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="addbiji()">新增</a>
+	<table class="easyui-datagrid" id="ccc" style="width:900;height:90%" data-options="fitColumns:true,singleSelect:true">
+		<thead>
+			<tr>
+				<th data-options="field:'createtime',width:100">创建时间</th>
+				<th data-options="field:'context',width:100">笔记内容</th>
+				<th data-options="field:'xiugaitime',width:100">修改时间</th>
+				<th data-options="field:'caozuo',width:100,align:'center',formatter:caozuo">操作</th>
+			</tr>
+		</thead>
+	</table>
+
+</div>
+
+<div id="adddbiji_window" title="添加笔记" class="easyui-window" data-options="modal:true,closed:true" style="width:400px;height:170px;padding:10px;">
+	<form id="dongtaiForm">
+		<table cellpadding="5" style="text-align: center;">
+
+			<tr>
+				<td>云笔记的内容 :</td>
+				<td><input type="text" id="bijitext" name="bijitext" />
+				</td>
+			</tr>
+
+		</table>
+	</form>
+
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="bijibaocun()">保存笔记</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="bijiquxiao()">取消</a>
+	</div>
+</div>
+
+<div id="bijichakan_window" title="查看笔记" class="easyui-window" data-options="modal:true,closed:true" style="width:400px;height:170px;padding:10px;">
+	<form id="dongtaiForm">
+		<table cellpadding="5" style="text-align: center;">
+
+			<input type="text" hidden="hidden" id="bid" />
+
+			<tr>
+				<td>云笔记的内容 :</td>
+				<td><input type="text" id="bijiccc" name="bijiccc" />
+				</td>
+			</tr>
+
+		</table>
+	</form>
+
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="bijchakanbaocun()">确定</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="bijichakanquxiao()">取消</a>
+	</div>
+</div>

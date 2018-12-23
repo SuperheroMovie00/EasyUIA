@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+		<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+		<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+		<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+		<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+		<script type="text/javascript">
+			var token = window.sessionStorage.getItem("token");
+
+			$(function() {
+				init();
+			})
+
+			function init() {
+				$.post('http://localhost:8080/CRM/student/init', {
+					token: token
+				}, function(r) {
+					if(r == true) {
+						$("#sb").attr("checked", "checked");
+						$(".switchbutton-inner").attr("style", "width: 172px; height: 30px; line-height: 30px; margin-left: 0px;");
+
+					} else {
+						$("#sb").removeAttr("checked");
+						$(".switchbutton-inner").attr("style", "width: 172px; height: 30px; line-height: 30px; margin-left: -72px;");
+
+
+					}
+				}, 'json');
+			}
+
+			/*保存的时候将状态存入session*/
+			function saveIsAuto() {
+
+				var anniustate = $("#sb").switchbutton("options").checked;
+
+				$.post('http://localhost:8080/CRM/student/initbaocun', {
+					kaiguanstate: anniustate,
+					token: token
+				}, function(r) {
+					if(r == true) {
+						$.messager.alert("提示","分量开启")
+					} else {
+						$.messager.alert("提示","分量关闭")
+			
+					}
+				}, 'json');
+	
+			}
+		</script>
+
+	</head>
+
+	<body>
+		<div id="win" class="easyui-window" title="分量设置" style="width:400px;height:400px;padding:5px; text-align:center;">
+			<div style="margin:30px auto;padding-top: 100px;">
+
+				<!--获取到按钮的状态值放入隐藏的文本框中-->
+				<input type="text" hidden="hidden" id="chuanruzhi" /> 程序自动分配开关:
+				<input id="sb" class="easyui-switchbutton" style="width:100px;height:30px">
+				<a class="easyui-linkbutton" iconCls="icon-save" onclick="saveIsAuto()">保存</a>
+			</div>
+		</div>
+	</body>
+
+</html>

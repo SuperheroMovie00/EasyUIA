@@ -1,0 +1,636 @@
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<script type="text/javascript">
+	var permission = window.localStorage.getItem("permission");
+
+	var token = window.sessionStorage.getItem("token");
+	$(function() {
+
+		namechaxun();
+
+		var s = permission.split(',')
+		alert("权限已刷新")
+
+
+		$("*[data-require-permission]").map((i, ele) => {
+			let elePer = $(ele).attr('data-require-permission');
+
+			let requireRemove = true;
+			for (p of s) {
+				if (elePer == p) requireRemove = false;
+
+			}
+
+			if (requireRemove) $(ele).remove();
+
+		});
+
+	});
+
+	function namechaxun() {
+		$("#dgz").datagrid({
+			url: 'http://localhost:8080/CRM/role/GetRolesAll', //调用数据接口
+			queryParams: { //传递参数
+				rolename: $("#rolename").val(),
+				token: token
+			}
+		});
+	}
+
+	document.onkeyup = function(e) { //onkeyup是javascript的一个事件、当按下某个键弹起 var _key;                                                 //的时触发  
+		if (e == null) { // ie  
+			_key = event.keyCode;
+		} else { // firefox              //获取你按下键的keyCode  
+			_key = e.which; //每个键的keyCode是不一样的  
+		}
+
+		if (_key == 13) { //判断keyCode是否是13，也就是回车键(回车的keyCode是13)  
+
+			namechaxun(); //验证成功触发一个Id为btnLogin的  
+			//按钮的click事件，达到提交表单的目的  
+		}
+	}
+
+	/*
+	 <a href="javascript:void(0)" data-require-permission='module:SetSysRights' onclick="setmodule(${index})">设置角色模块</a>&emsp;&emsp;
+	 <a href="javascript:void(0)" data-require-permission='module:Deletemodule' onclick="deletemodule(${index})">删除角色模块</a>&emsp;&emsp;
+	 * */
+
+	function formatterSetRight(value, row, index) {
+		return ` 
+		          <a href="javascript:void(0)" data-require-permission='module:SetSysRights' onclick="setmoduleer(${index})">设置角色模块</a>&emsp;&emsp;
+                   <a href="javascript:void(0)" data-require-permission='permission:deleterolepermission' onclick="diadeleteRight(${index})">删除角色权限</a>&emsp;&emsp;
+                     <a href="javascript:void(0)"  data-require-permission='permission:rolesetpermission'  onclick="setpermission(${index})">设置角色权限</a>&emsp;&emsp;
+                     <a href="javascript:void(0)" data-require-permission='role:UpdateRole' onclick="updateRoles(${index})">修改角色</a>&emsp;&emsp;
+                   <a href="javascript:void(0)" data-require-permission='role:DeleteRole' onclick="deleteInfo(${index})">删除角色</a>
+             `
+	}
+	//添加角色信息
+	function addRoles() {
+		$("#addRoles_window").window("open");
+	}
+	//清除角色表单信息
+	function clearRolesForm() {
+		$('#addRolesForm').form('clear');
+		$("#addRoles_window").window("close");
+	}
+	//提交表单信息
+	function submitRolesForm() {
+		var flag = $("#addRolesForm").form("validate");
+		var name = $("#name").val()
+		if (flag) {
+			$.post(
+				"http://localhost:8080/CRM/role/CreateRole", {
+					Name: name,
+					token: token
+				},
+				function(addRoles) {
+					if (addRoles.success) {
+						$.messager.alert("提示", "新增成功")
+						$("#addRoles_window").form("clear");
+						$("#addRoles_window").window("close");
+						$("#dgz").datagrid("reload"); //刷新表单
+					} else {
+						$.messager.alert("提示", addRoles.remark);
+
+					}
+
+				}, "json");
+		}
+	}
+	//修改角色表单信息
+	function updateRoles(index) {
+		var data = $("#dgz").datagrid("getData");
+		var row = data.rows[index];
+
+		$("#updaterolesForm").form("load", row); //读取记录填充到表单中。数据参数可以是一个字符串或一个对象类型，如果是字符串则作为远程URL，否则作为本地记录
+		$("#updateroles_window").window("open");
+
+	}
+	/*修改角色的提交方法*/
+	function submitupdateRolesForm() {
+		var name = $("#role_name").val();
+		var roleId = $("#roid").val();
+
+		$.post(
+			"http://localhost:8080/CRM/role/UpdateRole", {
+				Id: roleId,
+				Name: name,
+				token: token
+			},
+			function(res) {
+				if (res.success) {
+					$.messager.alert("提示", "修改成功")
+
+					//$.messager.alert("修改成功"); 修改后提示信息变成undefind
+					$("#updateroles_window").window("close");
+					$("#dgz").datagrid("reload");
+				} else {
+					alert(res.remark);
+				}
+			}, "json");
+		/*return ; //跳出循环*/
+
+	}
+	/*关闭窗口*/
+	function closeRolesForm() {
+		$("#updateroles_window").window("close");
+	}
+
+	/*删除角色*/
+	function deleteInfo(index) {
+		$.messager.confirm('确认', '您确认想要删除记录吗？', function(r) {
+			if (r) { // 用户点击了确认按钮
+				var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+				var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+
+				$.post('http://localhost:8080/CRM/permission/queryNotNode', {
+					roleId: row.id,
+					token: token
+				}, function(res) {
+					if (res != '') {
+						$.messager.alert("提示", "角色拥有权限不能删除")
+					} else {
+						$.post("http://localhost:8080/CRM/role/DeleteRole", {
+							roleId: row.id,
+							token: token
+						}, function(deleteInfo) {
+							var deleteInfo = eval("(" + deleteInfo + ")"); //你知道这里可以如何修改从而变得更简单么？                 
+							if (deleteInfo.success) {
+								$.messager.alert("提示", "删除成功")
+								$("#dgz").datagrid("load");
+							}
+						});
+
+					}
+				}, 'json');
+
+			}
+		})
+	}
+
+	/*给角色设置模块*/
+	function setmodule(index) {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+		$("#setmodule").dialog({
+			closed: false,
+			title: "您正在设置" + row.name + "模块"
+		});
+		$.post("http://localhost:8080/CRM/module/GetModulesByRoleId", {
+			roleId: row.id,
+			token: token
+		}, function(r) {
+			$("#moduletreemenu").tree("loadData", r)
+		}, "json");
+	}
+
+	//删除模块
+	function deletemodule(index) {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+		$("#deletemodule").dialog({
+			closed: false,
+			title: "您正在删除" + row.name + "模块"
+		});
+		$.post("http://localhost:8080/CRM/module/GetNotModulesByRoleId", {
+			roleId: row.id,
+			token: token
+		}, function(r) {
+			$("#deletemoduletreemenu").tree("loadData", r)
+		}, "json");
+
+	}
+
+	//设置权限
+	function setpermission(index) {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+
+		$("#setpermission").dialog({
+			closed: false,
+			title: "您正在设置" + row.name + "权限"
+		});
+
+		/*http://localhost:8080/CRM/permission/select*/
+		$.post(
+			"http://localhost:8080/CRM/permission/queryNode", {
+				roleId: row.id,
+				token: token
+			},
+			function(r) {
+
+				$("#diaSetRighttreemenu").tree("loadData", r);
+			}, "json");
+	}
+
+	//删除权限
+	function diadeleteRight(index) {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+
+		$("#diadeleteRight").dialog({
+			closed: false,
+			title: "您正在删除" + row.name + "权限"
+		});
+		$.post(
+			"http://localhost:8080/CRM/permission/queryNotNode", {
+				roleId: row.id,
+				token: token
+			},
+			function(r) {
+				$("#deletepermissiontreemenu").tree("loadData", r);
+			}, "json");
+	}
+
+	/*给角色设置模块*/
+	function setmoduleer(index) {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+		$("#setmoduleer").dialog({
+			closed: false,
+			title: "您正在设置" + row.name + "模块"
+		});
+		$.post("http://localhost:8080/CRM/module/select", {
+			roleId: row.id,
+			token: token
+		}, function(r) {
+			$("#moduletreemenuer").tree("loadData", r);
+
+		}, "json");
+	}
+
+
+
+
+	/*设置角色的模块信息*/
+	function setmoduleser() {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = $("#dgz").datagrid("getSelected");
+		/* var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。*/
+		var nodes = $("#moduletreemenuer").tree('getChecked', ['checked', 'indeterminate']);
+		var s = "";
+		for (var i = 0; i < nodes.length; i++) {
+			if (s == "") {
+				s += nodes[i].id;
+
+			} else {
+				s += ",";
+				s += nodes[i].id;
+			}
+		}
+
+		$.post(
+			"http://localhost:8080/CRM/module/modulebaocun", {
+				ModuleId: s,
+				roleId: row.id,
+				token: token
+			},
+			function(r) {
+				if (r.success) {
+					window.parent.loadTree();
+					$.messager.alert("消息", "保存模块成功!");
+
+					$("#setmodule").dialog("close")
+
+				} else {
+					$.messager.alert("消息", r.message);
+				}
+			}, "json");
+	}
+
+	//保存设置模块设置
+	function setmodules() {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = $("#dgz").datagrid("getSelected");
+		var nodes = $("#moduletreemenu").tree('getChecked', ['checked', 'indeterminate']);
+		var s = "";
+		for (var i = 0; i < nodes.length; i++) {
+			if (s == "") {
+				s += nodes[i].id;
+
+			} else {
+				s += ",";
+				s += nodes[i].id;
+			}
+		}
+		alert(s)
+		$.post(
+			"http://localhost:8080/CRM/module/SetSysRights", {
+				ModuleId: s,
+				roleId: row.id,
+				token: token
+			},
+			function(r) {
+				if (r.success) {
+					$.messager.alert("消息", "保存模块成功!");
+
+					$("#setmodule").dialog("close")
+
+					window.parent.loadTree();
+				} else {
+					$.messager.alert("消息", r.message);
+				}
+			}, "json");
+	}
+
+	/*删除角色的模块*/
+	function deletemodules() {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = $("#dgz").datagrid("getSelected");
+
+		var nodes = $("#deletemoduletreemenu").tree('getChecked', ['checked', 'indeterminate']);
+		var s = "";
+		for (var i = 0; i < nodes.length; i++) {
+			if (s == "") {
+				s += nodes[i].id;
+			} else {
+				s += ",";
+				s += nodes[i].id;
+			}
+		}
+		$.post(
+			"http://localhost:8080/CRM/module/Deletemodule", {
+				ModuleId: s,
+				roleId: row.id,
+				token: token
+			},
+			function(r) {
+				if (r.success) {
+					$.messager.alert("消息", "删除模块成功!");
+
+					$("#deletemodule").dialog("close")
+
+					window.parent.loadTree();
+
+				} else {
+					$.messager.alert("消息", r.message);
+				}
+			}, "json");
+	}
+
+	//保存设置权限
+	function submitSetRoles() {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = $("#dgz").datagrid("getSelected");
+		var nodes = $("#diaSetRighttreemenu").tree('getChecked', ['checked', 'indeterminate']);
+
+		var s = "";
+
+		/**
+		 * 谨记这里从1开始是因为权限树中没有父亲节点没有id值
+		 */
+		for (var i = 1; i < nodes.length; i++) {
+			if (s == "") {
+				s += nodes[i].id;
+
+			} else {
+				s += ",";
+				s += nodes[i].id;
+			}
+		}
+		/*http://localhost:8080/CRM/permission/shezhipermission*/
+		$.post(
+			"http://localhost:8080/CRM/permission/rolesetpermission", {
+				permissionId: s,
+				rId: row.id,
+				token: token
+			},
+			function(r) {
+				if (r.success) {
+					$.messager.alert("消息", "保存权限成功!");
+
+					$("#setpermission").dialog("close");
+
+					$("#diaSetRighttreemenu").tree("load");
+					window.parent.loadTree();
+
+				} else {
+					$.messager.alert("消息", r.message);
+				}
+			}, "json");
+	}
+
+	/*删除角色的权限*/
+	function deletepermission() {
+		var data = $("#dgz").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）。
+		var row = $("#dgz").datagrid("getSelected");
+
+		var nodes = $("#deletepermissiontreemenu").tree('getChecked', ['checked', 'indeterminate']);
+		var s = "";
+		for (var i = 1; i < nodes.length; i++) {
+			if (s == "") {
+				s += nodes[i].id;
+
+			} else {
+				s += ",";
+				s += nodes[i].id;
+			}
+		}
+		$.post(
+			"http://localhost:8080/CRM/permission/deleterolepermission", {
+				permissionId: s,
+				rId: row.id,
+				token: token
+			},
+			function(r) {
+				if (r.success) {
+					$.messager.alert("消息", "删除权限成功!");
+					$("#diadeleteRight").dialog("close");
+					$("#deletepermissiontreemenu").tree("reload");
+
+					window.parent.loadTree();
+				} else {
+					$.messager.alert("消息", r.message);
+				}
+			}, "json");
+
+	}
+
+	/*导入*/
+	function daoru() {
+		$("#daoru_window").window("open");
+	}
+
+	//Jquery上传文件
+	function upload() {
+		var formData = new FormData(); //表单数据对象
+		//取出一个文件:	 $("#avatar")[0].files[0]
+		// 取出文件数组： $("#avatar")[0].files, $("#avatar").get(0).files
+		//取出文件数组: $("#avatar").prop('files')
+
+		formData.append("myfile", $("#avatar").prop('files')[0]); //文件
+		formData.append("desc", $("#desc").val()); //文件描述信息
+		$.ajax({
+			url: "http://localhost:8080/CRM/excel/uploadrole",
+			type: 'POST',
+			data: formData,
+			dataType: 'json',
+			// 告诉jQuery不要去处理发送的数据
+			processData: false,
+			// 告诉jQuery不要去设置Content-Type请求头
+			contentType: false,
+			beforeSend: function() {
+				console.log("正在拼命上传文件，请稍候...");
+			},
+			success: function(result) {
+				if (result.success) {
+					$.messager.alert("提示", result.remark)
+					$("#daoru_window").window("close");
+				} else {
+					$.messager.alert("提示", "上传失败 err=>" + err)
+				}
+
+				console.log(result);
+				console.log("上传成功 result=>" + result);
+				$('#excelData').text(`Excel文件解析出的集合是=>${JSON.stringify(result)}`);
+			},
+			error: function(err) {
+				console.log(err);
+				console.log("上传失败 err=>" + err);
+			}
+		});
+	}
+</script>
+<table name="center" class="easyui-datagrid" id="dgz" title="角色列表" style="width:500px;height:400" data-options="fit:true,rownumbers:true,singleSelect:true,pagination:true,method:'post',toolbar:'#usertb',pageSize:10">
+	<thead>
+		<tr>
+			<th data-options="field:'id',width:280,hidden:true">用户ID</th>
+			<th data-options="field:'name',width:100">角色名称</th>
+			<th data-options="field:'actionUpdate',width:1250,title:'操作',formatter:formatterSetRight"></th>
+		</tr>
+	</thead>
+</table>
+<div id="usertb" style="padding:5px; height:auto">
+	<div id="toolbar" style="margin-bottom:5px">
+
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" plain="true" onclick="addRoles()">新增</a>&ensp;&ensp;&ensp;
+		角色名称: <input class="easyui-textbox" id="rolename" style="width:80px">
+
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="namechaxun()">查找</a>
+
+		<a href="http://localhost:8080/CRM/excel/downloadrole" class="easyui-linkbutton" iconCls="icon-print" plain="true">Excel导出所有角色</a>&nbsp;&nbsp;
+
+		<a href="http://localhost:8080/CRM/excel/downloadrolemoban" class="easyui-linkbutton" iconCls="icon-print" plain="true">角色导入模板下载</a>&nbsp;&nbsp;
+
+		<a class="easyui-linkbutton" iconCls="icon-print" plain="true" onclick="daoru()">角色批量导入</a>&nbsp;&nbsp;
+
+	</div>
+</div>
+
+<!--新增表单-->
+<div id="addRoles_window" class="easyui-window" title="新增员工信息" data-options="modal:true,closed:true,iconCls:'icon-save'"
+ style="width:500px;height:300px;padding:10px;">
+	<form id="addRolesForm">
+		<table cellpadding="5">
+			<tr>
+				<td>角色名称:</td>
+				<td><input class="easyui-textbox" type="text" name="name" id="name" data-options="required:true"></input>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitRolesForm()">保存</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearRolesForm()">取消</a>
+	</div>
+</div>
+
+<!-- 修改员工信息-->
+<div id="updateroles_window" class="easyui-window" title="修改员工信息" data-options="modal:true,closed:true,iconCls:'icon-save'"
+ style="width:500px;height:300px;padding:10px;">
+	<form id="updaterolesForm">
+		<input type="hidden" name="id" id="roid">
+		<table cellpadding="5">
+			<tr>
+				<td>管理名称:</td>
+				<td><input class="easyui-textbox" type="text" name="name" id="role_name" data-options="required:true"></input>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitupdateRolesForm()">保存</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="closeRolesForm()">取消</a>
+	</div>
+</div>
+
+<!--设置模块-->
+<div id="setmodule" style="width:300px;height:500px;padding:10px;">
+	<ul id="moduletreemenu" class="easyui-tree" data-options="animate:true,lines:true,checkbox:true"></ul>
+	<div style="text-align:center;padding:5px">
+		<a data-options="iconCls:'icon-ok'" href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="setmodules()">保存</a>
+	</div>
+</div>
+
+<!--设置模块-->
+<div id="setmoduleer" style="width:300px;height:500px;padding:10px;">
+	<ul id="moduletreemenuer" class="easyui-tree" data-options="animate:true,lines:true,checkbox:true"></ul>
+	<div style="text-align:center;padding:5px">
+		<a data-options="iconCls:'icon-ok'" href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="setmoduleser()">保存</a>
+	</div>
+</div>
+
+<!--删除模块-->
+<div id="deletemodule" style="width:300px;height:500px;padding:10px;">
+	<ul id="deletemoduletreemenu" class="easyui-tree" data-options="animate:true,lines:true,checkbox:true"></ul>
+	<div style="text-align:center;padding:5px">
+		<a data-options="iconCls:'icon-ok'" href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="deletemodules()">保存</a>
+	</div>
+</div>
+
+<!--设置权限-->
+<div id="setpermission" style="width:300px;height:500px;padding:10px;">
+	<ul id="diaSetRighttreemenu" class="easyui-tree" data-options="animate:true,lines:true,checkbox:true"></ul>
+	<div style="text-align:center;padding:5px">
+		<a data-options="iconCls:'icon-ok'" href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitSetRoles()">保存</a>
+	</div>
+</div>
+
+<!--删除权限-->
+<div id="diadeleteRight" style="width:300px;height:500px;padding:10px;">
+	<ul id="deletepermissiontreemenu" class="easyui-tree" data-options="animate:true,lines:true,checkbox:true"></ul>
+	<div style="text-align:center;padding:5px">
+		<a data-options="iconCls:'icon-ok'" href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="deletepermission()">保存</a>
+	</div>
+</div>
+
+<!--导入-->
+<div id="daoru_window" title="导入" class="easyui-window" data-options="modal:true,closed:true" style="width:400px;height:170px;padding:10px;">
+
+	<form id="dongtaiForm">
+
+		<table cellpadding="5" style="text-align: center;">
+
+			<input type="text" hidden="hidden" id="chuanid" />
+			<input type="text" hidden="hidden" id="chuanname" />
+
+			<tr>
+				<td>请选择文件:</td>
+				<td><input type="file" id="avatar" name="avatar">
+				</td>
+			</tr>
+
+			<tr>
+				<td>文件描述</td>
+				<td><input type="text" id="desc" name="desc" placeholder="请输入文件描述信息" />
+				</td>
+			</tr>
+
+			<tr>
+				<td>
+					<!--<p id="excelData"></p>-->
+				</td>
+				<td><input id="uploadBtn" type="button" value="开始上传" onclick="javascript:upload();" />
+				</td>
+			</tr>
+
+		</table>
+
+	</form>
+</div>

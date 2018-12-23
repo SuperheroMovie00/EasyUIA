@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<script>
+			var uid
+			function szInfo(i){
+				$("#szeuser_window").window("open");
+				var r=$("#dg").datagrid("getData");
+				var row=r.rows[i];
+				uid=row.Id;
+				$("#table1").datagrid({url:"http://stuapi.ysd3g.com/api/GetRolesAll",
+				queryParams:{
+					token:token
+				}
+			});
+				$("#table2").datagrid({url:"http://stuapi.ysd3g.com/api/GetRoleByUserId",
+				queryParams:{
+					token:token,
+					uId:uid
+				}})
+				
+			}
+			function sx(){
+				$("#table2").datagrid({url:"http://stuapi.ysd3g.com/api/GetRoleByUserId",
+				queryParams:{
+					token:token,
+					uId:uid
+				}})
+			}
+			function submint1(){
+				var a=$("#table1").datagrid("getSelected");
+				if(a!=null){
+					$.post("http://stuapi.ysd3g.com/api/AddUserToRole",{
+						token:token,
+						uId:uid,
+						rId:a.Id
+					},function(r){
+						if(r.success){
+							sx();
+						}
+					},"json")
+				}
+			}
+			function submint2(){
+				var a=$("#table2").datagrid("getSelected");
+				if(a!=null){
+					$.post("http://stuapi.ysd3g.com/api/RemoveUserFromRole",{
+						token:token,
+						uId:uid,
+						rId:a.Id
+					},function(r){
+						if(r.success){
+							sx();
+						}
+					},"json")
+				}
+			}
+
+		</script>
+	</head>
+	<body>
+		<div id="menu" style="margin-bottom:5px">
+			<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-add" name="add" plain="true" onclick="addModule(0)">新增</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-edit" name="edit" plain="true" onclick="updateModule(0)">修改</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-remove" name="del" plain="true" onclick="deleteModule(0)">删除</a>
+		</div>
+	</body>
+</html>

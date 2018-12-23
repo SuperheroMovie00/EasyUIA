@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+		<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+		<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+		<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+		<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+		<script type="text/javascript">
+			var token = window.sessionStorage.getItem("token");
+			
+				//点击新增窗体保存按钮
+	function submitUserForm() {
+		var flag = $("#adduserForm").form("validate");
+		var ename = $("#ename").val();
+		var pwd = $("#pwd").val();
+		var email = $("#email").val();
+		var mtel = $("#mtel").val();
+		if(!(/^1\d{10}$/.test(mtel))) {
+			alert("手机号有误，请重新输入！");
+			return false;
+		}
+		if(flag) {
+			$.post(
+				"http://localhost:8080/CRM/user/CreateUser", {
+					LoginName: ename,
+					Password: pwd,
+					ProtectEMail: email,
+					protectMTel: mtel,
+					token: token
+
+				},
+				function(addInfo) {
+					if(addInfo.success) {
+						alert("新增成功");
+						$('#adduserForm').form('clear');
+						$("#dg").datagrid("reload"); //通过调用reload方法，让datagrid刷新显示数据
+					}
+				}, "json");
+		}
+	}
+			
+		</script>
+		
+		
+		
+
+		<title></title>
+
+	</head>
+
+	<body>
+
+		<!--新增表单-->
+		<!--class="easyui-window" title="新增员工信息" data-options="modal:true,closed:true,iconCls:'icon-save'"-->
+		<div id="adduser_window" class="easyui-window" title="登记新员工" data-options="modal:true" style="width:500px;height:250px;padding:10px;">
+			<form id="adduserForm">
+				<table cellpadding="5" style="padding-left: 120px;">
+					<tr>
+						<td>用户名:</td>
+						<td><input class="easyui-textbox" type="text" name="name" id="ename" data-options="required:true"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>密码:</td>
+						<td><input class="easyui-textbox" type="password" id="pwd" name="subject" data-options="required:true"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>Email:</td>
+						<td><input class="easyui-textbox" type="text" name="email" id="email" data-options="required:true,validType:'email'"></input>
+						</td>
+					</tr>
+
+					<tr>
+						<td>手机号:</td>
+						<td><input type="text" class="easyui-numberbox" id="mtel" name="mtel" data-options="required:true"></td>
+					</tr>
+				</table>
+			</form>
+			<div style="text-align:center;padding:5px">
+				<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitUserForm()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearUserForm()">取消</a>
+			</div>
+		</div>
+
+	</body>
+
+</html>

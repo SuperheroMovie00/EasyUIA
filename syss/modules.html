@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8" />
+		<title>Document</title>
+		<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+		<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+		<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+		<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+		<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+		<script type="text/javascript">
+			var token = window.sessionStorage.getItem("token");
+			var permission = window.localStorage.getItem("permission");
+
+			$(function() {
+
+				var s = permission.split(',')
+					alert("权限已刷新");
+
+				$("*[data-require-permission]").map((i, ele) => {
+					let elePer = $(ele).attr('data-require-permission');
+
+					let requireRemove = true;
+					for(p of s) {
+						if(elePer == p) requireRemove = false;
+
+					}
+
+					if(requireRemove) $(ele).remove();
+
+				});
+
+				juesecha();
+			});
+
+			document.onkeyup = function(e) { //onkeyup是javascript的一个事件、当按下某个键弹起 var _key;                                                 //的时触发  
+				if(e == null) { // ie  
+					_key = event.keyCode;
+				} else { // firefox              //获取你按下键的keyCode  
+					_key = e.which; //每个键的keyCode是不一样的  
+				}
+
+				if(_key == 13) { //判断keyCode是否是13，也就是回车键(回车的keyCode是13)  
+
+					juesecha(); //验证成功触发一个Id为btnLogin的  
+					//按钮的click事件，达到提交表单的目的  
+				}
+			}
+
+			function juesecha() {
+				var roleName = $("#roleName").val();
+				//显示所有
+				$('#treemenu').treegrid({
+					url: 'http://localhost:8080/CRM/module/selectmodulefromrolename',
+					method: 'post',
+					queryParams: {
+						roleName: roleName,
+						token: token
+
+					},
+					idField: 'id',
+					treeField: 'text',
+					columns: [
+						[{
+								field: 'text',
+								title: '模块名字',
+								width: 300,
+								align: 'left'
+							}, {
+								field: 'path',
+								title: '模块路径URL',
+								width: 200,
+								align: 'left'
+							}, {
+								field: 'weight',
+								title: '权重值',
+								width: 200,
+								align: 'left'
+							}
+
+						]
+					]
+
+				});
+			}
+
+			function namechaxun() {
+				var Name = $("#name").val();
+				//显示所有
+				$('#treemenu').treegrid({
+					url: 'http://localhost:8080/CRM/module/selectmodulefromname',
+					method: 'post',
+					queryParams: {
+						Name: Name,
+						token: token
+					},
+					idField: 'id',
+					treeField: 'text',
+					columns: [
+						[{
+								field: 'text',
+								title: '模块名字',
+								width: 300,
+								align: 'left'
+							}, {
+								field: 'path',
+								title: '模块路径URL',
+								width: 200,
+								align: 'left'
+							}, {
+								field: 'weight',
+								title: '权重值',
+								width: 200,
+								align: 'left'
+							}
+
+						]
+					]
+
+				});
+			}
+
+			//点击新增按钮
+			function addModule() {
+				var nodes = $('#treemenu').treegrid('getSelected'); // 是否选中节点
+				console.log(JSON.stringify(nodes));
+				$('#addModulesForm').form('clear');
+				if(nodes != null) {
+					//将当前行数据填入表单
+					$("#parentModulename").text(nodes.text);
+					$("#addModule_window").window("open");
+				} else {
+					$.messager.alert("提示","请选择父节点!");
+				}
+			}
+
+			//清除模块表单信息
+			function clearaddModuleForm() {
+				$('#addModulesForm').form('clear');
+				$("#addModule_window").window("close");
+			}
+			//提交表单信息
+			function submitModulesForm() {
+				var nodes = $('#treemenu').treegrid('getSelected');
+				var flag = $("#addModulesForm").form("validate");
+				var ModulesWeight = $("#Moduleweight").val();
+				var ModuleUrl = $("#ModuleUrl").val();
+				var Modulename = $("#Modulename").val();
+				//console.log(ModuleUrl);
+				if(flag) {
+					$.post(
+						"http://localhost:8080/CRM/module/CreateModule", {
+							Name: Modulename,
+							ParentId: nodes.id,
+							Path: ModuleUrl,
+							Weight: ModulesWeight,
+							token: token
+
+						},
+						function(r) {
+							if(r.success) {
+								$.messager.alert("提示","新增成功!");
+								$("#addModule_window").window("close");
+								$('#addModuleForm').form('clear');
+								$('#treemenu').treegrid('reload'); //刷新表单
+								window.parent.loadTree();
+							}else{
+								alert(r.remark);
+								
+							}
+						}, "json");
+				}
+			}
+			//删除模块信息
+			function deleteModule() {
+				var nodes = $('#treemenu').treegrid('getSelected');
+				console.log(JSON.stringify(nodes));
+				if(nodes) {
+					$.messager.confirm('确认', '您确认想要删除吗？', function(r) {
+						$.post(
+							"http://localhost:8080/CRM/module/DeleteModule", {
+								mid: nodes.id,
+								token: token
+
+							},
+							function(deleteModule) {
+								if(deleteModule.success) {
+									$.messager.alert("提示","删除成功!");
+									$("#treemenu").treegrid('reload');
+									window.parent.loadTree();
+
+								}
+							}, "json");
+					});
+				} else {
+					$.messager.show({
+						title: '提示信息',
+						msg: '请选择父节点',
+						showType: 'show'
+					});
+				}
+			}
+
+			//修改模块信息
+			function updateModule() {
+				var nodes = $('#treemenu').treegrid('getSelected');
+				
+				if(nodes) {
+					$("#updateModuleForm").form("load", nodes);
+					$("#updateModule_window").window("open");
+				} else {
+					$.messager.alert("提示","请选择父节点!");
+				}
+			}
+			//确认修改模块信息
+			function submitupdateModuleForm() {
+				var nodes = $('#treemenu').treegrid('getSelected');
+				
+				
+
+				$.post(
+					"http://localhost:8080/CRM/module/UpdateModule", {
+						Id: nodes.id,
+						ParentId:$("#pid").val(),
+						Name: $("#text").val(),
+						Path: $("#path").val(),
+						Weight: $("#weight").val(),
+						token: token
+
+					},
+					function(res) {
+						if(res.success) {
+							$.messager.alert("提示","修改成功!");
+							$("#updateModule_window").window("close");
+							$('#treemenu').treegrid('reload');
+							window.parent.loadTree();
+						}else{
+							$.messager.alert("提示",res.remark);
+						}
+					}, "json");
+
+			}
+
+			//取消修改按钮
+			function clearupdateModuleForm() {
+				$('#updateModuleForm').form('clear');
+				$("#updateModule_window").window("close");
+			}
+		</script>
+	</head>
+
+	<body>
+		<!--<div style="color: red; font-size: 13px;">提示：右击节点进行操作</div>
+         <hr />-->
+		<div id="menu" style="margin-bottom:5px">
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-require-permission='module:CreateModule' iconCls="icon-add" name="add" plain="true" onclick="addModule(0)">新增</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-require-permission='module:UpdateModule' iconCls="icon-edit" name="edit" plain="true" onclick="updateModule(0)">修改</a>
+			<a href="javascript:void(0)" class="easyui-linkbutton" data-require-permission='module:DeleteModule' iconCls="icon-remove" name="del" plain="true" onclick="deleteModule(0)">删除</a>
+
+			&emsp;&emsp;角色名称: <input class="easyui-textbox" id="roleName" style="width:80px">
+			<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="juesecha()">查找</a>
+		</div>
+
+		<div>
+
+			<table id="treemenu" style="width:720px;height:800px"></table>
+
+		</div>
+
+		<!--新增表单-->
+		<div id="addModule_window" class="easyui-window" title="新增模块信息" data-options="modal:true,closed:true,iconCls:'icon-save'" style="width:500px;height:300px;padding:10px;">
+			<form id="addModuleForm">
+				<table cellpadding="5">
+					<tr>
+						<td>父节点名称:</td>
+						<td>
+							<div id="parentModulename"></div>
+						</td>
+					</tr>
+
+					<tr>
+						<td>权重:</td>
+						<td><input class="easyui-numberbox" type="text" name="Moduleweight" id="Moduleweight" data-options="required:true"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>URL:</td>
+						<td><input class="easyui-textbox" type="text" name="ModuleUrl" id="ModuleUrl" data-options="required:true"></input>
+						</td>
+					</tr>
+					<tr>
+						<td>模块名称:</td>
+						<td><input class="easyui-textbox" type="text" name="Modulename" id="Modulename" data-options="required:true"></input>
+						</td>
+					</tr>
+				</table>
+			</form>
+			<div style="text-align:center;padding:5px">
+				<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitModulesForm()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearaddModuleForm()">取消</a>
+			</div>
+		</div>
+
+		<!--修改表单-->
+		<div id="updateModule_window" class="easyui-window" title="修改模块信息" data-options="closed:true,iconCls:'icon-save'" style="align-content,width:500px;height:200px;padding:10px;">
+			<form id="updateModuleForm">
+				
+				<input  type="text" id="pid" name="parentId" hidden="hidden" />
+				<table cellpadding="5">
+					
+					<tr>
+						<td>权重:</td>
+						<td><input class="easyui-numberbox" type="text" name="weight" id="weight" data-options="required:true" />
+						</td>
+					</tr>
+					<tr>
+						<td>URL:</td>
+						<td><input class="easyui-textbox" type="text" name="path" id="path" data-options="required:true" />
+						</td>
+					</tr>
+					<tr>
+						<td>模块名称:</td>
+						<td><input class="easyui-textbox" type="text" name="text" id="text" data-options="required:true" />
+						</td>
+					</tr>
+				</table>
+			</form>
+			<div style="text-align:center;padding:5px">
+				<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitupdateModuleForm()">保存</a>
+				<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearupdateModuleForm()">取消</a>
+			</div>
+		</div>
+	</body>
+
+</html>

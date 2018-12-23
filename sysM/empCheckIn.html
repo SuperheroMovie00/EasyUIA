@@ -1,0 +1,175 @@
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<script type="text/javascript">
+	/*var token = "fa1d1f29-ae09-4f4d-be5e-60b228ad9952";*/
+	var token = window.sessionStorage.getItem("token");
+
+	document.onkeyup = function(e) { //onkeyup是javascript的一个事件、当按下某个键弹起 var _key;                                                 //的时触发  
+		if(e == null) { // ie  
+			_key = event.keyCode;
+		} else { // firefox              //获取你按下键的keyCode  
+			_key = e.which; //每个键的keyCode是不一样的  
+		}
+
+		if(_key == 13) { //判断keyCode是否是13，也就是回车键(回车的keyCode是13)  
+
+			searchUserInfo(); //验证成功触发一个Id为btnLogin的  
+			//按钮的click事件，达到提交表单的目的  
+		}
+	}
+
+	$(function() {
+		searchUserInfo();
+
+		$("#dg").datagrtid({
+			url: 'http://localhost:8080/CRM/usercheck/selectalluserCheck',
+			queryParams: { //传递参数
+				orderBy: $("#orderby").val(),
+				userName: $("#userName").val(),
+				beginDate: $("#beginDate").val(),
+				endDate: $("#endDate").val(),
+				token: token
+			}
+		});
+	});
+
+	function formatterSetRight() {
+		return `
+		<a href="javascript:void(0)">签退</a>
+               		 <a href="javascript:void(0)">签到</a>
+               		 
+             `
+	}
+
+	//点击查找
+	function searchUserInfo() {
+		$('#dg').datagrid({
+			url: 'http://localhost:8080/CRM/usercheck/selectalluserCheck',
+			queryParams: {
+				userName: $("#userName").textbox("getValue"),
+				beginCreateTime: $("#beginDate").datebox("getValue"),
+				endCreateTime: $("#beginDate").datebox("getValue"),
+				order: $("#orderby").combobox("getValue"),
+				token: token
+
+			}
+			/*,onLoadSuccess:function(){
+							$(".easyui-linkbutton").linkbutton();
+						}*/
+		});
+	}
+	$(function() {
+		searchUserInfo();
+	})
+
+	//签到用户
+	function qiantuianniu(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='qiantuiInfo(" + index + ")'>签退</a> ";
+	}
+	//签退用户
+	function qiandaoanniu(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='qiandaoInfo(" + index + ")'>签到</a>";
+	}
+
+	//重置保存页面取消
+	function closeresetPasswordUserForm() {
+		$('#resetPassworduserForm').form('clear');
+		$("#resetPassworduser_window").window("close");
+	}
+	//签到用户
+	function qiandaoInfo(index) {
+		var data = $("#dg").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+		var qian = row.checkState;
+
+		if(qian == "已签退") {
+			$.messager.confirm('确认', '您确认想要签到吗？', function(r) {
+				if(r) {
+
+					$.post(
+						"http://localhost:8080/CRM/usercheck/qiandao", {
+							username: row.userName,
+							token: token
+
+						},
+						function(e) {
+							if(e.success) {
+								$.messager.alert("提示","签到成功");
+								$("#dg").datagrid("load");
+							}
+						}, "json");
+				}
+			});
+		} else {
+			alert("该员工已经签到了,不能重复签到");
+		}
+	}
+	//签退用户
+	function qiantuiInfo(index) {
+		var data = $("#dg").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）
+		var row = data.rows[index]; //获取第index行对应的json对象（再来一遍）。
+		var qian = row.checkState;
+
+		if(qian == "已签到") {
+			$.messager.confirm('确认', '您确认想要签退吗？', function(r) {
+				if(r) {
+
+					$.post(
+						"http://localhost:8080/CRM/usercheck/qiantui", {
+							username: row.userName,
+							token: token
+							/*token:token*/
+						},
+						function(e) {
+							if(e.success) {
+								$.messager.alert("提示","签退成功");
+								$("#dg").datagrid("load");
+							}
+						}, "json");
+				}
+			});
+		} else {
+			$.messager.alert("提示","该员工已经签退了,不能重复签退");
+		}
+	}
+
+	//获取当前用户的角色
+	function getRolesByuserId() {
+		var data = $("#dg").datagrid("getData"); //获取datagrid对应的json对象集合（再来一遍）
+		var row = data.rows[index];
+
+	}
+</script>
+
+<table name="center" class="easyui-datagrid" id="dg" title="员工签到表" data-options="fit:true,rownumbers:true,singleSelect:true,pagination:true,method:'post',toolbar:'#usertb',pageSize:40">
+	<thead>
+		<tr>
+			<th data-options="field:'userName',width:280">用户名</th>
+			<th data-options="field:'checkState',width:100">签到状态</th>
+			<th data-options="field:'checkInTime',width:150">签到时间</th>
+			<th data-options="field:'checkOutTime',width:150,">签退时间</th>
+
+			<th data-options="field:'qiantui',width:120,align:'center',formatter:qiantuianniu">签退</th>
+			<th data-options="field:'qiandao',width:120,align:'center',formatter:qiandaoanniu">签到</th>
+
+		</tr>
+	</thead>
+</table>
+<div id="usertb" style="padding:5px; height:auto">
+	<div style="margin-bottom:5px">
+		&nbsp;&nbsp;&nbsp;&nbsp; 名称: <input class="easyui-textbox" id="userName" style="width:80px"></input>&nbsp;&nbsp;&nbsp;&nbsp; 签到时间：
+		<input class="easyui-datebox" id="beginDate" name="beginDate"></input>&nbsp;&nbsp;&nbsp;&nbsp; 结束日期：
+		<input class="easyui-datebox" id="endDate" name="endDate"></input>&nbsp;&nbsp;&nbsp;&nbsp; 签到状态：
+		<select class="easyui-combobox" name="orderby" id="orderby" style="height:auto;">
+			<option value="">请选择</option>
+			<option value="已签到">已签到</option>
+			<option value="已签退">已签退</option>
+		</select>
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="searchUserInfo()">查找</a>
+	</div>
+</div>

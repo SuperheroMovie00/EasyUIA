@@ -1,0 +1,200 @@
+<meta charset="UTF-8">
+<script src="../js/Highcharts-6.1.0/code/highcharts.js"></script>
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+<title></title>
+
+<input type="number" id="zhong" hidden="hidden" />
+<input type="number" id="gaozhong" hidden="hidden" />
+<input type="number" id="benke" hidden="hidden" />
+<input type="number" id="dazhuan" hidden="hidden" />
+<input type="number" id="weizhi" hidden="hidden" />
+<input type="number" id="chuzhong" hidden="hidden" />
+<input type="number" id="qita" hidden="hidden" />
+
+<input type="number" id="zaidu" hidden="hidden" />
+<input type="number" id="daiye" hidden="hidden" />
+<input type="number" id="jiuye" hidden="hidden" />
+<input type="number" id="zaizhi" hidden="hidden" />
+
+<div id="xiugai_window" class="easyui-window" fit="true" style="background-color: white;" title="学生的信息" data-options="modal:true" style="width:700px;height:620px;padding:10px;">
+	<a class="easyui-linkbutton" iconCls="icon-search" style="width: 1200;" onclick="tubiao()">图表</a>
+	<!--两个并列的图表-->
+	<table>
+		<tr>
+			<th><span id="container"></span></th>
+			<th><span id="container2"></span></th>
+		</tr>
+
+	</table>
+</div>
+<script type="text/javascript">
+	var token = window.sessionStorage.getItem("token");
+
+	/*点击图表显示*/
+	function tubiao() {
+		location.reload()
+	}
+
+	/*学生的学历统计*/
+	$.post('http://localhost:8080/CRM/student/Studentcount', function(res) {
+		$("#zhong").val(res)
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountxueli', {
+		state: "高中",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#gaozhong").val((res / cc) * 100);
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountxueli', {
+		state: "初中",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#chuzhong").val((res / cc) * 100);
+
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountxueli', {
+		state: "本科",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#benke").val((res / cc) * 100);
+
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountxueli', {
+		state: "未知",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#weizhi").val((res / cc) * 100);
+
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountxueli', {
+		state: "大专",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#dazhuan").val((res / cc) * 100);
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountxueli', {
+		state: "其它",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#qita").val((res / cc) * 100);
+	}, 'json');
+
+	var chart = Highcharts.chart('container', {
+		title: {
+			text: '学生学历的统计占比'
+		},
+		tooltip: {
+			headerFormat: '{series.name}<br>',
+			pointFormat: '{point.name}: <b>{point.percentage:.1f}%</b>'
+		},
+		plotOptions: {
+			pie: {
+				allowPointSelect: true, // 可以被选择
+				cursor: 'pointer', // 鼠标样式
+				dataLabels: {
+					enabled: true,
+					format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+					style: {
+						color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+					}
+				}
+			}
+		},
+		series: [{
+			type: 'pie',
+			name: '学生学历占比',
+			data: [
+				['本科', parseFloat($("#benke").val())],
+				['大专', parseFloat($("#dazhuan").val())],
+				['未知', parseFloat($("#weizhi").val())],
+				['高中', parseFloat($("#gaozhong").val())],
+				['初中', parseFloat($("#chuzhong").val())],
+				['其他', parseFloat($("#qita").val())]
+			]
+		}]
+	});
+
+	/*学生的状态统计*/
+
+	$.post('http://localhost:8080/CRM/student/selectcountstate', {
+		studentstate: "待业",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#daiye").val((res / cc) * 100);
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountstate', {
+		studentstate: "在读",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#zaidu").val((res / cc) * 100);
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountstate', {
+		studentstate: "在职",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#zaizhi").val((res / cc) * 100);
+	}, 'json');
+
+	$.post('http://localhost:8080/CRM/student/selectcountstate', {
+		studentstate: "就业",
+		token: token
+	}, function(res) {
+		var cc = $("#zhong").val();
+		$("#jiuye").val((res / cc) * 100);
+	}, 'json');
+
+	var chart = Highcharts.chart('container2', {
+		title: {
+			text: '学生状态的统计占比'
+		},
+		tooltip: {
+			headerFormat: '{series.name}<br>',
+			pointFormat: '{point.name}: <b>{point.percentage:.1f}%</b>'
+		},
+		plotOptions: {
+			pie: {
+				allowPointSelect: true, // 可以被选择
+				cursor: 'pointer', // 鼠标样式
+				dataLabels: {
+					enabled: true,
+					format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+					style: {
+						color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black'
+					}
+				}
+			}
+		},
+		series: [{
+			type: 'pie',
+			name: '学生状态占比',
+			data: [
+				['在读', parseFloat($("#zaidu").val())],
+				['待业', parseFloat($("#daiye").val())],
+				['就业', parseFloat($("#jiuye").val())],
+				['在职', parseFloat($("#zaizhi").val())]
+
+			]
+		}]
+	});
+</script>

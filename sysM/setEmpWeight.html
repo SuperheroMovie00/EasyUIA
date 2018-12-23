@@ -1,0 +1,131 @@
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<script type="text/javascript">
+	/*var token = window.sessionStorage.getItem("token");*/
+
+	document.onkeyup = function(e) { //onkeyup是javascript的一个事件、当按下某个键弹起 var _key;                                                 //的时触发  
+		if(e == null) { // ie  
+			_key = event.keyCode;
+		} else { // firefox              //获取你按下键的keyCode  
+			_key = e.which; //每个键的keyCode是不一样的  
+		}
+
+		if(_key == 13) { //判断keyCode是否是13，也就是回车键(回车的keyCode是13)  
+
+			searchStudentInfo(); //验证成功触发一个Id为btnLogin的  
+			//按钮的click事件，达到提交表单的目的  
+		}
+	}
+
+	$(function() {
+		searchStudentInfo();
+	});
+	var token = window.sessionStorage.getItem("token");
+
+	function searchStudentInfo() {
+		$('#dg').datagrid({
+			url: 'http://localhost:8080/CRM/Askers/selectaskers',
+			queryParams: {
+				token: token
+			}
+		});
+	}
+
+	function weight(index) {
+		var data = $("#dg").datagrid("getData");
+		var row = data.rows[index];
+		$("#setweightForm").form("load", row);
+		$("#setweight_window").window("open");
+
+	}
+
+	function submitUserForm() {
+		var weight = $("#weight").val();
+		var bakContent = $("#bakContent").val();
+		var name = $("#askerName").val();
+
+		if(weight == '') {
+			$.messager.alert("提示","权重不能为空");
+		} else {
+			$.post(
+				"http://localhost:8080/CRM/Askers/updateaskers", {
+					name: name,
+					weight: weight,
+					bakContent: bakContent,
+					token: token
+				},
+				function(res) {
+					if(res.success) {
+						$.messager.alert("提示","修改成功");
+						$('#setweight_window').form('clear');
+						$("#setweight_window").window("close");
+						$("#dg").datagrid("reload");
+
+					}
+				}, "json");
+
+		}
+	}
+
+	function formatterSetRight() {
+		return `   
+               		<a href="javascript:void(0)">编辑权重</a>
+             `
+	}
+
+	//保存页面取消
+	function clearUserForm() {
+		$('#setweight_window').form('clear');
+		$("#setweight_window").window("close");
+	}
+
+	//操作用户
+	function setweight(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='weight(" + index + ")'>编辑权重</a> ";
+	}
+</script>
+
+<table name="center" class="easyui-datagrid" id="dg" title="咨詢師列表" data-options="fit:true,rownumbers:true,singleSelect:true,pagination:true,method:'post',toolbar:'#usertb',pageSize:40">
+	<thead>
+		<tr>
+
+			<th data-options="field:'askerName',width:300">用户名</th>
+			<th data-options="field:'roleName',width:300">角色</th>
+			<th data-options="field:'weight',width:300">權重</th>
+			<th data-options="field:'bakContent',width:300">備注</th>
+			<th data-options="field:'setweight',width:80,align:'center',formatter:setweight">操作</th>
+
+		</tr>
+	</thead>
+</table>
+
+<div id="setweight_window" title="修改权重信息" class="easyui-window" data-options="modal:true,closed:true" style="width:400px;height:200px;padding:10px;">
+	<form id="setweightForm">
+		<table cellpadding="5" style="text-align: center;">
+
+			<input type="text" hidden="hidden" id="askerName" name="askerName" />
+
+			<tr>
+				<td>权重:</td>
+				<td><input class="easyui-textbox" type="text" name="weight" id="weight" style="width: 220px;" data-options="required:true"></input>
+				</td>
+			</tr>
+
+			<tr>
+				<td>备注:</td>
+				<td><input class="easyui-textbox" type="text" name="bakContent" id="bakContent" style="height: 50px;width: 220px;" data-options="required:true"></input>
+				</td>
+			</tr>
+		</table>
+	</form>
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitUserForm()">保存修改</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearUserForm()">取消</a>
+	</div>
+
+</div>

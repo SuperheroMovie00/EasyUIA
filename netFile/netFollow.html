@@ -1,0 +1,623 @@
+<meta charset="UTF-8">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css" href="../js/easyui/themes/black/easyui.css">
+<script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+<script type="text/ecmascript" src="../js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+<script type="text/javascript">
+	 
+	var token=window.sessionStorage.getItem("token");
+	
+	$(function() {
+         searchStudentInfo(); 
+		$("#dg").datagrtid({
+			url: 'http://localhost:8080/CRM/netfollows/selectnetfollows',
+			queryParams: { //传递参数
+			/*	studentName:'',
+				phone:'',
+				zixunName:'',
+				isPlay: '',
+				IsValid:'',
+				IsReturnVist:'',
+				qq:'',
+				beginCreateTime: '',
+				endCreateTime: '',*/
+				token:token
+			}
+		});
+	});
+	
+	
+	function shezhi(){
+		$("#shezhi_window").window("open");
+	}
+	
+	
+	
+	/*设置选中的要显示的列*/
+	function shezhibaocun(){
+		
+		var row=$("#adduserForm").from("getSelections");
+		
+	}
+
+
+
+
+
+
+
+	function formatterSetRight() {
+		return `<a href="javascript:void(0)">重置密码</a>
+               		 <a href="javascript:void(0)">角色设置</a>
+               		 <a href="javascript:void(0)">锁定用户</a>
+               		 <a href="javascript:void(0)">解锁用户</a>
+               		 <a href="javascript:void(0)">修改</a>
+               		 <a href="javascript:void(0)">删除</a>
+             `
+	}
+
+	//点击新增按钮
+	function addInfo() {
+		$("#adduser_window").window("open");
+	}
+	/*//点击新增窗体保存按钮
+	function submitUserForm() {
+		var flag = $("#adduserForm").form("validate");
+		
+		
+		var Name = $("#Name").val();
+		var Sex = $("#Sex").combobox("getValue");
+		var Age = $("#Age").val();
+		var Phone = $("#Phone").val();
+		var StuStatus = $("#StuStatus").val();
+		var MsgSource = $("#MsgSource").val();
+		var SourceUrl = $("#SourceUrl").val();
+		var SourceKeyWord = $("#SourceKeyWord").val();
+		var QQ = $("#QQ").val();
+		var WeiXin = $("#WeiXin").val();
+		var PerState = $("#PerState").combobox("getValue");
+		var IsBaoBei = $("#IsBaoBei").combobox("getValue");
+		var Content = $("#Content").val();
+		
+
+		
+		if(!(/^1\d{10}$/.test(Phone))) {
+			alert("手机号有误，请重新输入！");
+			return false;
+		}*/
+		
+		/*if(!(/(\w+):\/\/([^/:]+)(:\d*)?([^# ]*)/.test(SourceUrl))) {
+			alert("网址号有误，请重新输入！");
+			return false;
+		}*/
+		
+		
+		/*if(flag) {
+			$.post(
+				"http://localhost:8080/CRM/insertStudent", {
+					Name:Name,
+					Sex:Sex,
+					Age:Age,
+					Phone:Phone,
+					StuStatus:StuStatus,
+					MsgSource:MsgSource,
+					SourceUrl:SourceUrl,
+					SourceKeyWord:SourceKeyWord,
+					QQ:QQ,
+					WeiXin:WeiXin,
+					PerState:PerState,
+					IsBaoBei:IsBaoBei,
+					Content:Content
+
+				},
+				function(r) {
+					if(r.success) {
+						alert("新增成功");
+						$("#adduser_window").window("close");
+						$("#dg").datagrid("reload"); //通过调用reload方法，让datagrid刷新显示数据
+					}
+				}, "json");
+		}
+	}*/
+
+	//保存页面取消
+	function clearUserForm() {
+		$('#adduserForm').form('clear');
+		$("#adduser_window").window("close");
+	}
+
+	//点击查找
+	function searchStudentInfo() {
+		var userName=$("#studentName").val();
+		var LoginName=$("#loginName").val();
+		var beginCreateTime=$("#beginCreateTime").val();
+		var endCreateTime=$("#endCreateTime").val();
+		var varhuitype =$("#followType").combobox("getValue");
+		var huistate=$("#followState").combobox("getValue");
+		
+
+		$('#dg').datagrid({
+			
+			url: 'http://localhost:8080/CRM/netfollows/selectnetfollows',
+			queryParams: {
+				userName:userName,
+				LoginName:LoginName,
+				beginCreateTime:beginCreateTime,
+				endCreateTime:endCreateTime,
+				varhuitype:varhuitype,
+				huistate:huistate,
+				token:token
+			}
+		});
+		
+	}
+	$(function() {
+		searchStudentInfo();
+	})
+
+	//锁定和解锁用户
+	function formatterLockUser(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='lockUser(" + index + ")'>锁定用户</a> <a class='easyui-linkbutton' style='cursor: pointer;' onclick='unlockUser(" + index + ")'>解锁用户</a>";
+	}
+	//设置角色权限
+	function formatterSetRole(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='showRoles(" + index + ")'>设置</a>";
+	}
+	//重置密码
+	function formatterResetPassword(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='resetPassword(" + index + ")'>重置密码</a>";
+	}
+	//操作用户
+	function formatterOPUser(value, row, index) {
+		return "<a class='easyui-linkbutton' style='cursor: pointer;' onclick='updateInfo(" + index + ")'>修改</a> <a class='easyui-linkbutton' style='cursor: pointer;' onclick='deleteInfo(" + index + ")'>删除</a>";
+	}
+
+
+</script>
+
+<table name="center" class="easyui-datagrid" id="dg" title="学生列表" data-options="fit:true,rownumbers:true,singleSelect:true,pagination:true,method:'post',toolbar:'#usertb',pageSize:40">
+	<thead>
+		<tr>
+	
+			
+			
+
+			<th data-options="field:'studentName',width:200">学生姓名</th>
+			<th data-options="field:'followTime',width:200">跟踪时间</th>
+			<th data-options="field:'followState',width:200">回访情况</th>
+			<th data-options="field:'followType',width:200">跟踪方式</th>
+			<th data-options="field:'content',width:200">内容</th>
+			<th data-options="field:'nextFollowTime',width:200">下次跟踪时间</th>
+			
+			
+			
+		
+			
+			
+			
+		</tr>
+	</thead>
+</table>
+
+<div id="usertb" style="padding:5px; height:auto">
+	<div style="margin-bottom:5px">
+		
+		
+		 学生名字: <input class="easyui-textbox" id="studentName" style="width:100px"></input>&nbsp;
+		 跟踪者名字: <input class="easyui-textbox" id="loginName" style="width:100px"></input>&nbsp;
+		
+		
+		
+		
+	
+		
+		 跟踪开始时间：<input class="easyui-datebox" id="beginCreateTime" name="beginCreateTime" style="width: 80px;"></input>&nbsp;
+		跟踪结束时间: <input class="easyui-datebox" id="endCreateTime" name="endCreateTime" style="width: 80px;"></input>&nbsp;
+		
+		
+		回访方式:
+		  <select class="easyui-combobox" name="followType" id="followType" style="height:auto;">
+			<option value="">请选择</option>
+			<option value="面谈">面谈</option>
+			<option value="电话">电话</option>
+			<option value="网络">网络</option>
+		</select>&nbsp;
+		
+		
+		回访情况:
+	<select class="easyui-combobox" name="followState" id="followState" style="height:auto;">
+			<option value="">请选择</option>
+			<option value="思量">思量</option>
+			<option value="上门未报名">上门未报名</option>
+			<option value="报名未进班">报名未进班</option>
+		</select>&nbsp;
+		
+		<a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="searchStudentInfo()">查找</a>
+	
+	
+	</div>
+</div>
+
+
+<!--新增学生-->
+<div id="adduser_window" title="新增学生信息" class="easyui-window" data-options="modal:true,closed:true" style="width:400px;height:550px;padding:10px;">
+	<form id="adduserForm">
+		<table cellpadding="5" style="text-align: center;">
+			<tr>
+				<td>学生姓名:</td>
+				<td><input class="easyui-textbox" type="text" name="Name" id="Name" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生性别:</td>
+				<td>
+					<select id="Sex" name="Sex" class="easyui-combobox" style="width:145px">   
+                          <option>未知</option>   
+                          <option>男</option> 
+                          <option>女</option>   
+                   </select> 
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生年龄:</td>
+				<td><input class="easyui-numberbox" min="0" max="200" type="text" id="Age" name="Age" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生电话:</td>
+				<td><input type="text" class="easyui-numberbox" id="Phone" name="Phone" data-options="required:true"></td>
+			</tr>
+			
+			<tr>
+				<td>学生学历:</td>
+				<td>	
+				<select id="StuStatus" name="StuStatus" class="easyui-combobox" style="width:145px">   
+                          <option>未知</option>   
+                          <option>本科</option> 
+                          <option>大专</option>   
+                          <option>高中</option>   
+                          <option>初中</option>   
+                          <option>小学</option>  
+                          <option>研究生</option>  
+                          <option>硕士</option>  
+                          <option>博士</option> 
+                          <option>博士后</option> 
+                   </select> 
+				
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生渠道:</td>
+				<td><input class="easyui-textbox" type="text" name="MsgSource" id="MsgSource" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生来源网站:</td>
+				<td><input class="easyui-textbox" type="text" name="SourceUrl" id="SourceUrl" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生来源关键词:</td>
+				<td><input class="easyui-textbox" type="text" name="SourceKeyWord" id="SourceKeyWord" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生QQ:</td>
+				<td><input class="easyui-numberbox" type="text" name="QQ" id="QQ" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			
+			<tr>
+				<td>学生微信:</td>
+				<td><input class="easyui-textbox" type="text" name="WeiXin" id="WeiXin" data-options="required:true"></input>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学生状态:</td>
+				<td>
+					<select id="PerState" name="PerState" class="easyui-combobox" style="width:145px">   
+                          <option>未知</option>   
+                          <option>在读</option> 
+                          <option>就业</option>   
+                          <option>在职</option>   
+                   </select> 
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否报备:</td>
+				<td>
+					<select id="IsBaoBei" name="IsBaoBei" class="easyui-combobox" style="width:145px">   
+                          <option>是</option>   
+                          <option>否</option>     
+                   </select> 
+				</td>
+			</tr>
+			
+			<tr>
+				<td>备注:</td>
+				<td><input class="easyui-textbox" type="text" name="Content" id="Content" data-options="required:true"></input>
+				</td>
+			</tr>
+
+
+			
+		</table>
+	</form>
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="submitUserForm()">新增</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearUserForm()">取消</a>
+	</div>
+</div>
+
+
+<div id="shezhi_window" class="easyui-window" title="选择要显示的列" data-options="modal:true,closed:true" style="width:200px;height:500px;padding:10px;">
+	<form id="adduserForm">
+		<table cellpadding="5">
+			<tr>
+				<td>创建按时间:</td>
+				<td><input type="checkbox" name="bm" id="cc" />
+				</td>
+			</tr>
+			<tr>
+				<td>学员姓名:</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>姓名(咨询):</td>
+				<td> <input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>性别:</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>年龄:</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>学历:</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>个人状态:</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>所在区域</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>学员QQ</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>来源部门</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>是否有效</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>是否回访</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>首次回访时间</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			<tr>
+				<td>是否上门</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>来源渠道</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>来源关键词</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>微信号</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>备注</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>课程方向</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否有效</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>打分</td>
+				<td><input type="checkbox" name="bm"/>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否回访</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>首次回访时间</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否上门</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>上门时间</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>无效原因</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否付款</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>付款时间</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>付款金额</td>
+				<td><input type="checkbox" name="bm"/>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否退费</td>
+				<td><input type="checkbox" name="bm"/>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否进班</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>进班时间</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>进班备注</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>咨询师备注</td>
+				<td><input type="checkbox" name="bm"/>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否删除</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>来源部门</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>学院关注</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>是否报备</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>咨询师姓名</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>录入人姓名</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>退费原因</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>预定金额</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+			
+			<tr>
+				<td>预付定金时间</td>
+				<td><input type="checkbox" name="bm" />
+				</td>
+			</tr>
+				
+		</table>
+	</form>
+	<div style="text-align:center;padding:5px">
+		<a href="javascript:void(0)" class="easyui-linkbutton" type="button" onclick="shezhibaocun()">保存</a>
+		<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearUserForm()">取消</a>
+	</div>
+</div>
+
+
+

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="js/easyui/themes/icon.css">
+		<link rel="stylesheet" type="text/css" href="js/easyui/themes/black/easyui.css">
+		<script type="text/javascript" src="js/easyui/jquery.min.js"></script>
+		<script type="text/javascript" src="js/easyui/jquery.easyui.min.js"></script>
+		<script type="text/ecmascript" src="js/easyui/locale/easyui-lang-zh_CN.js"></script>
+
+	</head>
+
+	<body style="background-image: url(img/timg.jpg);padding-top: 230px;">
+		<div align="center" ;width:300px;height: 240px;>
+			<div id="p" class="easyui-dialog" title="欢迎登录" style="width:300px;height:150px;padding:10px;background:#fafafa;">
+				<form id="form" method="post">
+					<table>
+						<tr>
+							<td>
+								<font color="#000000">登录名:</font>
+							</td>
+							<td><input class="easyui-textbox" type="text" name="name" id="name" data-options="required:true"></input>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<font color="#000000">密&emsp;码:</font>
+							</td>
+							<td><input class="easyui-textbox" name="email" data-options="required:true" type="password" id="pwd"></input>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<a href="javascript:void(0)" data-options="iconCls:'icon-ok'" class="easyui-linkbutton" type="button" onclick="submitLoginForm()">登录系统</a>
+								<a href="javascript:void(0)" data-options="iconCls:'icon-cancel'" class="easyui-linkbutton" type="button" onclick="clear_from()">清除输入</a>
+							</td>
+						</tr>
+					</table>
+				</form>
+			</div>
+		</div>
+	</body>
+	<script>
+		/*点击Enter键登陆*/
+		document.onkeyup = function(e) { //onkeyup是javascript的一个事件、当按下某个键弹起 var _key;                                                 //的时触发  
+			if(e == null) { // ie  
+				_key = event.keyCode;
+			} else { // firefox              //获取你按下键的keyCode  
+				_key = e.which; //每个键的keyCode是不一样的  
+			}
+
+			if(_key == 13) { //判断keyCode是否是13，也就是回车键(回车的keyCode是13)  
+
+				submitLoginForm(); //验证成功触发一个Id为btnLogin的  
+				//按钮的click事件，达到提交表单的目的  
+			}
+		}
+		/*清除输入的登陆信息*/
+		function clear_from() {
+			$('#form').form('clear')
+		}
+
+		/*验证登陆操作*/
+		function submitLoginForm() {
+			var flag = $("#ff").form("validate"); //使用validate验证表单的所有验证是否全部通过，通过为true，否则为false
+			var un = $("#name").val(); //获取表单中的用户名
+			var pwd = $("#pwd").val(); //获取用户密码
+
+			if(flag) {
+				$.post('http://localhost:8080/CRM/user/login', {
+					un: un,
+					pwd: pwd
+
+				}, function(e) {
+					if(e.success) {
+						let message = e.message;
+						var token = e.remark;
+						window.localStorage.setItem('uid', message.uid);
+						window.localStorage.setItem("loginName", message.name);
+						window.localStorage.setItem('roleNames', message.roleNames);
+						/*将后台的权限存入session中*/
+						//window.sessionStorage.setItem("permission",message.permission)
+						window.localStorage.setItem("permission", message.permission);
+
+						console.log(message.permission);
+						window.sessionStorage.setItem("token", token);
+						window.location.href = "main.html";
+						
+					} else {
+						$.messager.alert("提示", e.cuowu);
+					}
+
+				}, "json")
+			} else {
+				$.messager.alert("提示", '请填写正确信息');
+			}
+		}
+	</script>
+
+</html>
